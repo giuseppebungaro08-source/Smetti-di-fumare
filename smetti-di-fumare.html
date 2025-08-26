@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smetti di Fumare</title>
+    <!-- Tailwind CSS per uno stile moderno e responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font "Inter" da Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* Stili CSS personalizzati */
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.5s, color 0.5s;
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        body.dark {
+            background-color: #111827;
+            color: #e5e7eb;
+        }
+        .bg-custom-primary { background-color: var(--primary-color); }
+        .text-custom-primary { color: var(--primary-color); }
+        .bar-chart-container { display: flex; align-items: flex-end; gap: 4px; height: 100px; }
+        .bar { width: 10%; transition: height 0.5s ease-in-out; border-radius: 4px 4px 0 0; background-color: var(--primary-color); }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-500">
+    <div class="min-h-screen max-w-sm mx-auto flex flex-col pt-8 pb-4 px-4">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-extrabold text-custom-primary">Smetti di Fumare</h1>
+            <div class="flex items-center space-x-2">
+                <span id="user-display" class="text-xs text-gray-500 dark:text-gray-400 font-medium"></span>
+                <button id="settings-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </button>
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8 0 1010.586 10.586z"></path></svg>
+                </button>
+                <button id="logout-btn" class="p-2 rounded-full hover:bg-red-200 dark:hover:bg-red-800 transition-colors hidden">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Sezione di caricamento -->
+        <div id="loading-state" class="flex-grow flex flex-col items-center justify-center space-y-4 hidden">
+            <div class="loader"></div>
+            <p class="text-gray-600 dark:text-gray-400">Caricamento...</p>
+        </div>
+
+        <!-- Sezione di autenticazione (visibile solo se non loggato) -->
+        <main id="auth-section" class="flex-grow flex flex-col justify-center space-y-6">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 text-center">Registrati o Accedi</h2>
+                <form id="auth-form" class="space-y-4">
+                    <input type="email" id="email-input" placeholder="Email" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-custom-primary">
+                    <input type="password" id="password-input" placeholder="Password" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-custom-primary">
+                    <button type="submit" id="auth-btn" class="w-full text-white font-bold py-3 rounded-xl shadow-lg transition-colors bg-custom-primary">Accedi</button>
+                </form>
+                <p id="toggle-auth" class="text-center mt-4 text-sm text-gray-500 cursor-pointer hover:underline">Non hai un account? Registrati</p>
+            </div>
+        </main>
+
+        <!-- Sezione principale dell'app (visibile solo se loggato) -->
+        <main id="app-section" class="flex-grow space-y-6 hidden">
+            
+            <!-- Box delle statistiche di oggi -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+                <h2 class="text-xl font-bold mb-2">Oggi</h2>
+                <p id="cigs-count" class="text-5xl font-extrabold text-center text-custom-primary">0</p>
+                <p class="text-center text-sm text-gray-500">sigarette fumate oggi</p>
+            </div>
+            
+            <!-- Box delle statistiche totali -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg grid grid-cols-2 gap-4 text-center">
+                <div>
+                    <h3 class="text-sm text-gray-500 font-medium">Totale</h3>
+                    <p id="total-cigs" class="text-2xl font-bold text-custom-primary">0</p>
+                    <p class="text-xs text-gray-400">sigarette</p>
+                </div>
+                <div>
+                    <h3 class="text-sm text-gray-500 font-medium">Tot. Risparmiati</h3>
+                    <p id="total-money-saved" class="text-2xl font-bold text-green-500 dark:text-green-400">0.00 €</p>
+                    <p class="text-xs text-gray-400">dall'inizio</p>
+                </div>
+            </div>
+
+            <!-- Box del timer e risparmio odierno -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg grid grid-cols-2 gap-4 text-center">
+                <div>
+                    <h3 class="text-sm text-gray-500 font-medium">Dall'ultima sigaretta</h3>
+                    <p id="timer" class="text-2xl font-bold text-teal-500 dark:text-teal-400">00:00:00</p>
+                </div>
+                <div>
+                    <h3 class="text-sm text-gray-500 font-medium">Risparmio Oggi</h3>
+                    <p id="money-saved" class="text-2xl font-bold text-green-500 dark:text-green-400">0.00 €</p>
+                </div>
+            </div>
+
+            <!-- Box del grafico giornaliero -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
+                <h2 class="text-xl font-bold mb-4 text-center">Andamento Giornaliero (ultime 12 ore)</h2>
+                <div id="daily-chart" class="bar-chart-container"></div>
+            </div>
+
+            <!-- Pulsante principale per aggiungere una sigaretta -->
+            <button id="add-cigarette-btn" class="w-full text-white font-bold py-4 px-6 rounded-full shadow-lg transition-colors transform active:scale-95 flex items-center justify-center space-x-2 bg-custom-primary">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" /></svg>
+                <span>Fumata una sigaretta</span>
+            </button>
+        </main>
+
+        <!-- Modal per le notifiche/messaggi -->
+        <div id="modal-container" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 transition-opacity duration-300 hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl w-full max-w-sm text-center transform scale-100">
+                <h3 id="modal-title" class="text-2xl font-bold mb-4"></h3>
+                <p id="modal-message" class="text-gray-700 dark:text-gray-300 mb-6"></p>
+                <button id="modal-close-btn" class="text-white font-bold py-2 px-6 rounded-full transition-colors bg-custom-primary">Chiudi</button>
+            </div>
+        </div>
+
+        <!-- Modal delle Impostazioni -->
+        <div id="settings-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 transition-opacity duration-300 hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl w-full max-w-sm transform scale-100">
+                <h3 class="text-2xl font-bold mb-4 text-center">Impostazioni</h3>
+                <div class="space-y-4">
+                    <!-- Nuovo input per il tipo di sigaretta -->
+                    <div>
+                        <label for="cigarette-type-input" class="block text-sm font-medium mb-1">Tipologia di sigaretta</label>
+                        <select id="cigarette-type-input" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-custom-primary">
+                            <option value="traditional">Sigarette Tradizionali</option>
+                            <option value="rolling">Tabacco da Rollare</option>
+                            <option value="heated">Tabacco Riscaldato</option>
+                        </select>
+                    </div>
+                    <!-- Costo per pacchetto/sacchetto -->
+                    <div>
+                        <label for="cost-per-pack-input" class="block text-sm font-medium mb-1">Costo per pacchetto (€)</label>
+                        <input type="number" id="cost-per-pack-input" min="0" step="0.01" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-custom-primary" placeholder="5.50">
+                    </div>
+                    <!-- Numero di sigarette per pacchetto/sacchetto -->
+                    <div>
+                        <label for="cigs-per-pack-input" class="block text-sm font-medium mb-1">Sigarette per pacchetto</label>
+                        <input type="number" id="cigs-per-pack-input" min="1" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-custom-primary" placeholder="20">
+                    </div>
+                    <div>
+                        <label for="color-picker-input" class="block text-sm font-medium mb-1">Colore principale</label>
+                        <input type="color" id="color-picker-input" class="w-full h-12 rounded-xl focus:outline-none focus:ring-2 focus:ring-custom-primary">
+                    </div>
+                    <div>
+                        <label for="daily-goal-input" class="block text-sm font-medium mb-1">Obiettivo giornaliero</label>
+                        <input type="number" id="daily-goal-input" min="0" class="w-full p-3 rounded-xl bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-custom-primary" placeholder="10">
+                    </div>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button id="save-settings-btn" class="text-white font-bold py-2 px-6 rounded-full transition-colors bg-custom-primary">Salva</button>
+                    <button id="close-settings-btn" class="ml-2 text-gray-600 dark:text-gray-400 font-bold py-2 px-6 rounded-full transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">Chiudi</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Importazione delle librerie Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Variabili globali fornite dall'ambiente Canvas per la configurazione di Firebase
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Inizializzazione di Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Stato dell'applicazione e elementi del DOM
+        let appData = {
+            history: [],
+            lastCigaretteTime: null,
+            dailyGoal: 10,
+            costPerPack: 5.50,
+            cigsPerPack: 20,
+            cigaretteType: 'traditional', // Nuovo stato per il tipo di sigaretta
+            theme: {
+                isDark: false,
+                primaryColor: '#4f46e5'
+            },
+            startTime: null
+        };
+        let authMode = 'login';
+        let userId = null;
+        let unsubscribeFromFirestore = null;
+
+        const elements = {
+            authSection: document.getElementById('auth-section'),
+            appSection: document.getElementById('app-section'),
+            loadingState: document.getElementById('loading-state'),
+            emailInput: document.getElementById('email-input'),
+            passwordInput: document.getElementById('password-input'),
+            authBtn: document.getElementById('auth-btn'),
+            toggleAuth: document.getElementById('toggle-auth'),
+            userDisplay: document.getElementById('user-display'),
+            settingsBtn: document.getElementById('settings-btn'),
+            logoutBtn: document.getElementById('logout-btn'),
+            cigsCount: document.getElementById('cigs-count'),
+            totalCigs: document.getElementById('total-cigs'),
+            totalMoneySaved: document.getElementById('total-money-saved'),
+            timer: document.getElementById('timer'),
+            moneySaved: document.getElementById('money-saved'),
+            addCigaretteBtn: document.getElementById('add-cigarette-btn'),
+            themeToggleBtn: document.getElementById('theme-toggle'),
+            modalContainer: document.getElementById('modal-container'),
+            modalTitle: document.getElementById('modal-title'),
+            modalMessage: document.getElementById('modal-message'),
+            modalCloseBtn: document.getElementById('modal-close-btn'),
+            dailyChart: document.getElementById('daily-chart'),
+            settingsModal: document.getElementById('settings-modal'),
+            costPerPackInput: document.getElementById('cost-per-pack-input'),
+            cigsPerPackInput: document.getElementById('cigs-per-pack-input'),
+            dailyGoalInput: document.getElementById('daily-goal-input'),
+            colorPickerInput: document.getElementById('color-picker-input'),
+            cigaretteTypeInput: document.getElementById('cigarette-type-input'), // Nuova variabile per il selettore
+            saveSettingsBtn: document.getElementById('save-settings-btn'),
+            closeSettingsBtn: document.getElementById('close-settings-btn')
+        };
+        
+        // Frasi motivazionali
+        const motivationalPhrases = [
+            "Ogni giorno senza fumo è una vittoria!",
+            "Il tuo corpo ti ringrazierà.",
+            "Stai costruendo un futuro più sano.",
+            "Una sigaretta in meno è un passo in più verso la libertà.",
+            "Ricorda il tuo perché. Puoi farcela!",
+            "La forza è dentro di te.",
+            "Sei più forte di questa abitudine.",
+            "Non è facile, ma ne vale la pena.",
+            "Continua così, il progresso è reale.",
+            "Smettere di fumare è un atto di amore verso te stesso."
+        ];
+        
+        // Funzione per mostrare un loader
+        const showLoader = () => elements.loadingState.classList.remove('hidden');
+        const hideLoader = () => elements.loadingState.classList.add('hidden');
+
+        // Funzione per mostrare il modal con un messaggio
+        const showModal = (title, message) => {
+            elements.modalTitle.textContent = title;
+            elements.modalMessage.textContent = message;
+            elements.modalContainer.classList.remove('hidden');
+        };
+
+        // Funzione per nascondere il modal
+        const hideModal = () => {
+            elements.modalContainer.classList.add('hidden');
+        };
+
+        // Funzione per aggiornare l'interfaccia utente in base allo stato
+        const updateUI = () => {
+            const todayCount = appData.history.filter(c => new Date(c.timestamp).getDate() === new Date().getDate()).length;
+            elements.cigsCount.textContent = todayCount;
+            elements.totalCigs.textContent = appData.history.length;
+            
+            // Calcolo del risparmio
+            const costPerCigarette = appData.cigsPerPack > 0 ? (appData.costPerPack / appData.cigsPerPack) : 0;
+            const cigarettesNotSmokedToday = Math.max(0, appData.dailyGoal - todayCount);
+            const moneySavedToday = (cigarettesNotSmokedToday * costPerCigarette).toFixed(2);
+            elements.moneySaved.textContent = `${moneySavedToday} €`;
+
+            // Calcolo del risparmio totale
+            const totalCigsNotSmoked = (Math.floor((Date.now() - appData.startTime) / (1000 * 60 * 60 * 24)) * appData.dailyGoal) - appData.history.length;
+            const totalMoneySaved = (Math.max(0, totalCigsNotSmoked) * costPerCigarette).toFixed(2);
+            elements.totalMoneySaved.textContent = `${totalMoneySaved} €`;
+            
+            // Aggiornamento del tema
+            document.body.classList.toggle('dark', appData.theme.isDark);
+            document.documentElement.style.setProperty('--primary-color', appData.theme.primaryColor);
+
+            // Aggiorna il grafico
+            updateDailyChart();
+        };
+        
+        // Funzione per aggiornare il timer
+        const updateTimer = () => {
+            if (appData.lastCigaretteTime) {
+                const elapsed = Date.now() - appData.lastCigaretteTime;
+                const hours = Math.floor(elapsed / (1000 * 60 * 60)).toString().padStart(2, '0');
+                const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+                const seconds = Math.floor((elapsed % (1000 * 60)) / 1000).toString().padStart(2, '0');
+                elements.timer.textContent = `${hours}:${minutes}:${seconds}`;
+            } else {
+                elements.timer.textContent = "00:00:00";
+            }
+        };
+
+        // Funzione per aggiornare il grafico a barre
+        const updateDailyChart = () => {
+            const today = new Date();
+            const todayHistory = appData.history.filter(c => new Date(c.timestamp).getDate() === today.getDate() && new Date(c.timestamp).getMonth() === today.getMonth() && new Date(c.timestamp).getFullYear() === today.getFullYear());
+            const hourlyCounts = Array.from({ length: 12 }, () => 0);
+            const nowHour = today.getHours();
+
+            todayHistory.forEach(c => {
+                const hour = new Date(c.timestamp).getHours();
+                const chartIndex = hour - (nowHour - 11);
+                if (chartIndex >= 0 && chartIndex < 12) {
+                    hourlyCounts[chartIndex]++;
+                }
+            });
+
+            elements.dailyChart.innerHTML = '';
+            const maxCount = Math.max(...hourlyCounts, 1);
+            hourlyCounts.forEach(count => {
+                const bar = document.createElement('div');
+                const height = (count / maxCount) * 100;
+                bar.className = 'bar';
+                bar.style.height = `${Math.min(height, 100)}%`;
+                elements.dailyChart.appendChild(bar);
+            });
+        };
+
+        // Funzione per salvare i dati su Firestore
+        const saveData = async () => {
+            if (!userId) {
+                // Previene il salvataggio se l'utente non è autenticato.
+                // L'errore non viene più mostrato nella console.
+                return;
+            }
+            try {
+                const docRef = doc(db, `/artifacts/${appId}/users/${userId}/user_data/tracker_data`);
+                await setDoc(docRef, appData, { merge: true });
+                console.log("Dati salvati con successo!");
+            } catch (e) {
+                console.error("Errore nel salvataggio dei dati:", e);
+                showModal("Errore", "Impossibile salvare i dati. Riprova più tardi.");
+            }
+        };
+
+        // Funzione per caricare i dati e ascoltare gli aggiornamenti in tempo reale
+        const startDataListener = (uid) => {
+            if (unsubscribeFromFirestore) {
+                unsubscribeFromFirestore();
+            }
+            const docRef = doc(db, `/artifacts/${appId}/users/${uid}/user_data/tracker_data`);
+            unsubscribeFromFirestore = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    Object.assign(appData, docSnap.data());
+                }
+                if (!appData.history) {
+                    appData.history = [];
+                }
+                updateUI();
+            }, (error) => {
+                console.error("Errore nell'ascolto dei dati:", error);
+                showModal("Errore di connessione", "Impossibile caricare i dati. Riprova.");
+            });
+        };
+
+        // Gestione degli eventi di autenticazione
+        onAuthStateChanged(auth, async (user) => {
+            hideLoader();
+            if (user) {
+                userId = user.uid;
+                elements.userDisplay.textContent = `UID: ${userId}`;
+                elements.authSection.classList.add('hidden');
+                elements.appSection.classList.remove('hidden');
+                elements.logoutBtn.classList.remove('hidden');
+                elements.settingsBtn.classList.remove('hidden');
+
+                // Carica i dati iniziali una volta e poi avvia l'ascoltatore in tempo reale
+                const userDocRef = doc(db, `/artifacts/${appId}/users/${userId}/user_data/tracker_data`);
+                const userDocSnap = await getDoc(userDocRef);
+
+                if (userDocSnap.exists()) {
+                    Object.assign(appData, userDocSnap.data());
+                    if (!appData.history) {
+                        appData.history = [];
+                    }
+                } else {
+                    appData.startTime = Date.now();
+                    await setDoc(userDocRef, appData);
+                }
+                
+                // Avvia l'ascoltatore per gli aggiornamenti in tempo reale
+                startDataListener(userId);
+                updateUI();
+                
+            } else {
+                userId = null;
+                elements.userDisplay.textContent = '';
+                elements.authSection.classList.remove('hidden');
+                elements.appSection.classList.add('hidden');
+                elements.logoutBtn.classList.add('hidden');
+                elements.settingsBtn.classList.add('hidden');
+                if (unsubscribeFromFirestore) {
+                    unsubscribeFromFirestore();
+                }
+            }
+        });
+        
+        // Autenticazione iniziale con token personalizzato o anonima
+        const initialAuth = async () => {
+            showLoader();
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Initial auth failed:", error);
+                hideLoader();
+            }
+        };
+
+        // Event listener per il form di autenticazione
+        elements.authBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = elements.emailInput.value;
+            const password = elements.passwordInput.value;
+
+            if (!email || !password) {
+                showModal("Attenzione", "Inserisci email e password.");
+                return;
+            }
+
+            try {
+                showLoader();
+                if (authMode === 'login') {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                }
+            } catch (error) {
+                let errorMessage = "Si è verificato un errore.";
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = "Questa email è già registrata.";
+                } else if (error.code === 'auth/invalid-email' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    errorMessage = "Email o password non validi.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = "La password deve essere di almeno 6 caratteri.";
+                }
+                showModal("Errore", errorMessage);
+                hideLoader();
+            }
+        });
+
+        // Event listener per cambiare la modalità da login a register
+        elements.toggleAuth.addEventListener('click', () => {
+            authMode = authMode === 'login' ? 'register' : 'login';
+            elements.authBtn.textContent = authMode === 'login' ? "Accedi" : "Registrati";
+            elements.toggleAuth.textContent = authMode === 'login' ? "Non hai un account? Registrati" : "Hai già un account? Accedi";
+        });
+        
+        // Event listener per il pulsante "Fumata una sigaretta"
+        elements.addCigaretteBtn.addEventListener('click', () => {
+            const now = Date.now();
+            if (!appData.history) { appData.history = []; }
+            appData.history.push({ timestamp: now });
+            appData.lastCigaretteTime = now;
+            const motivationalMessage = motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)];
+            showModal("Congratulazioni!", motivationalMessage);
+            saveData();
+        });
+
+        // Event listener per il toggle del tema
+        elements.themeToggleBtn.addEventListener('click', () => {
+            appData.theme.isDark = !appData.theme.isDark;
+            saveData();
+            updateUI();
+        });
+
+        // Event listener per il logout
+        elements.logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Errore durante il logout:", error);
+            }
+        });
+
+        // Event listener per chiudere il modal
+        elements.modalCloseBtn.addEventListener('click', hideModal);
+
+        // Event listener per il pulsante impostazioni
+        elements.settingsBtn.addEventListener('click', () => {
+            elements.costPerPackInput.value = appData.costPerPack;
+            elements.cigsPerPackInput.value = appData.cigsPerPack;
+            elements.dailyGoalInput.value = appData.dailyGoal;
+            elements.colorPickerInput.value = appData.theme.primaryColor;
+            elements.cigaretteTypeInput.value = appData.cigaretteType; // Imposta il valore selezionato
+            elements.settingsModal.classList.remove('hidden');
+        });
+
+        // Event listener per salvare le impostazioni
+        elements.saveSettingsBtn.addEventListener('click', () => {
+            appData.costPerPack = parseFloat(elements.costPerPackInput.value) || appData.costPerPack;
+            appData.cigsPerPack = parseInt(elements.cigsPerPackInput.value) || appData.cigsPerPack;
+            appData.dailyGoal = parseInt(elements.dailyGoalInput.value) || appData.dailyGoal;
+            appData.theme.primaryColor = elements.colorPickerInput.value;
+            appData.cigaretteType = elements.cigaretteTypeInput.value; // Salva il tipo di sigaretta
+            saveData();
+            updateUI();
+            elements.settingsModal.classList.add('hidden');
+        });
+
+        // Event listener per chiudere il modal delle impostazioni
+        elements.closeSettingsBtn.addEventListener('click', () => {
+            elements.settingsModal.classList.add('hidden');
+        });
+
+        // Inizializzazione dell'app
+        document.addEventListener('DOMContentLoaded', () => {
+            initialAuth();
+            setInterval(updateTimer, 1000);
+            setInterval(updateDailyChart, 60000); // Aggiorna il grafico ogni minuto
+        });
+    </script>
+</body>
+</html>
