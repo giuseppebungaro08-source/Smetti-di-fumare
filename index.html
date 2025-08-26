@@ -175,10 +175,33 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Variabili globali fornite dall'ambiente Canvas per la configurazione di Firebase
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+       <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyA8JBk6WvdbUl5vJGiuD5GG2qEw_69o_R8",
+    authDomain: "smetti-di-fumare.firebaseapp.com",
+    projectId: "smetti-di-fumare",
+    storageBucket: "smetti-di-fumare.firebasestorage.app",
+    messagingSenderId: "875630150598",
+    appId: "1:875630150598:web:55d60f21f24169c0db28c7",
+    measurementId: "G-1LWYK7JM4F"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+        };
+
+        const appId = firebaseConfig.projectId;
+        const initialAuthToken = null;
 
         // Inizializzazione di Firebase
         const app = initializeApp(firebaseConfig);
@@ -522,6 +545,13 @@
 
         // Inizializzazione dell'app
         document.addEventListener('DOMContentLoaded', () => {
+            // Verifica che la configurazione di Firebase sia valida
+            if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId || firebaseConfig.projectId.startsWith('YOUR')) {
+                showModal("Errore di Configurazione", "Devi inserire la tua configurazione di Firebase nel codice per far funzionare l'app. Segui le istruzioni fornite.");
+                hideLoader();
+                return;
+            }
+            
             initialAuth();
             setInterval(updateTimer, 1000);
             setInterval(updateDailyChart, 60000); // Aggiorna il grafico ogni minuto
